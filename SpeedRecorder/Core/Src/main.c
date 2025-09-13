@@ -45,7 +45,10 @@ TIM_HandleTypeDef htim1;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-uint32_t frequency;
+uint32_t frequency = 0;
+
+uint32_t avgFrequency;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -105,8 +108,9 @@ int main(void)
 
 
 
-	  printf("hello \n");
-	  HAL_Delay(500);
+	  avgFrequency = rollingAverage(frequency);
+	  //printf("hello \n");
+	 // HAL_Delay(500);
 
     /* USER CODE END WHILE */
 
@@ -309,6 +313,25 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
 	        previousCaptureValue = captureValue;
 	    }
 }
+
+uint32_t rollingAverage(uint32_t currentNum){
+	static uint32_t nums[100];
+	static uint8_t ind;
+	uint32_t average = 0;
+
+
+	nums[ind] = currentNum;
+
+	ind = ind < 100 ? ind+1 : 0;
+
+	for(uint8_t i = 0; i<100; i++){
+		average+=nums[i];
+	}
+	average /= 100;
+
+	return average;
+
+	}
 
 /* USER CODE END 4 */
 
