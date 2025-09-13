@@ -31,7 +31,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define TIMER_FREQUENCY 1000000
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -94,7 +94,7 @@ int main(void)
   MX_USART2_UART_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
-
+  HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_1);
 
   /* USER CODE END 2 */
 
@@ -304,7 +304,8 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
 
 	if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1) {
 	        captureValue = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);
-	        frequency = HAL_RCC_GetPCLK2Freq() / (captureValue - previousCaptureValue);
+
+	        frequency = (TIMER_FREQUENCY) / (captureValue - previousCaptureValue);
 	        previousCaptureValue = captureValue;
 	    }
 }
