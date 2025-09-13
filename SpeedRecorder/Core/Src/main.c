@@ -31,7 +31,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define TIMER_FREQUENCY 1000000
+#define TIMER_FREQUENCY 60000000
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -192,7 +192,7 @@ static void MX_TIM1_Init(void)
 
   /* USER CODE END TIM1_Init 1 */
   htim1.Instance = TIM1;
-  htim1.Init.Prescaler = 179;
+  htim1.Init.Prescaler = 2;
   htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim1.Init.Period = 65535;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
