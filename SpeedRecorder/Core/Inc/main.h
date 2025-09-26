@@ -73,7 +73,7 @@ void Error_Handler(void);
 #define SWO_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
-uint32_t rollingAverage(uint32_t currentNum);
+float getFreq(uint32_t* captureTimes);
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

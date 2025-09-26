@@ -32,6 +32,8 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define TIMER_FREQUENCY 90000000
+
+#define NUMB_CAPTURES 10
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -46,9 +48,9 @@ DMA_HandleTypeDef hdma_tim2_ch1;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-uint32_t frequency = 0;
+uint32_t capture[NUMB_CAPTURES];
 
-uint32_t avgFrequency;
+float avgFrequency;
 
 /* USER CODE END PV */
 
@@ -100,7 +102,7 @@ int main(void)
   MX_USART2_UART_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-  HAL_TIM_IC_Start_IT(&htim2, TIM_CHANNEL_1);
+  HAL_TIM_IC_Start_DMA(&htim2, TIM_CHANNEL_1, capture, 10);
 
   /* USER CODE END 2 */
 
@@ -111,7 +113,7 @@ int main(void)
 
 
 
-	  avgFrequency = rollingAverage(frequency);
+	  avgFrequency = getFreq(capture);
 	  //printf("hello \n");
 	 // HAL_Delay(500);
 
@@ -285,11 +287,6 @@ static void MX_DMA_Init(void)
   /* DMA controller clock enable */
   __HAL_RCC_DMA1_CLK_ENABLE();
 
-  /* DMA interrupt init */
-  /* DMA1_Stream5_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Stream5_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Stream5_IRQn);
-
 }
 
 /**
@@ -337,38 +334,18 @@ int __io_putchar(int ch){
 	return 0;
 }
 
-//https://community.st.com/t5/stm32-mcus/how-to-use-the-input-capture-feature/ta-p/704161
-
-void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
-	static volatile uint16_t captureValue = 1;
-	static volatile uint16_t previousCaptureValue = 1;
-	static volatile uint32_t frequency1 = 1;
-
-	if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1) {
-	        captureValue = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);
-
-	        frequency1 = (TIMER_FREQUENCY) / (captureValue /*- previousCaptureValue*/);
-	        frequency = frequency1 < 100000 ? frequency1 : frequency;
-	        previousCaptureValue = captureValue;
-	    }
-}
-
-uint32_t rollingAverage(uint32_t currentNum){
-	static uint32_t nums[100];
-	static uint8_t ind;
-	uint32_t average = 0;
 
 
-	nums[ind] = currentNum;
 
-	ind = ind < 100 ? ind+1 : 0;
+float getFreq(uint32_t* captureTimes){
 
-	for(uint8_t i = 0; i<100; i++){
-		average+=nums[i];
+	float average = 0;
+
+	for(uint8_t i = 0; i<NUMB_CAPTURES; i++){
+		average+=captureTimes[i];
 	}
-	average /= 100;
 
-	return average;
+	return (float)TIMER_FREQUENCY/((average - (average*0.02)) / (float)NUMB_CAPTURES);
 
 }
 
