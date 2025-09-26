@@ -74,6 +74,7 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN Private defines */
 float getFreq(uint32_t* captureTimes);
+float speedCalc(float frequencyShift);
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus

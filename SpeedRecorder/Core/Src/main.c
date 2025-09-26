@@ -32,8 +32,9 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define TIMER_FREQUENCY 90000000
-
 #define NUMB_CAPTURES 10
+
+#define WAVELENGTH 0.01249135242f
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -52,6 +53,8 @@ uint32_t capture[NUMB_CAPTURES];
 
 float avgFrequency;
 
+float meterPerSecond;
+float kph;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -102,7 +105,7 @@ int main(void)
   MX_USART2_UART_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-  HAL_TIM_IC_Start_DMA(&htim2, TIM_CHANNEL_1, capture, 10);
+  HAL_TIM_IC_Start_DMA(&htim2, TIM_CHANNEL_1, capture, NUMB_CAPTURES);
 
   /* USER CODE END 2 */
 
@@ -110,13 +113,11 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
-
-
 	  avgFrequency = getFreq(capture);
-	  //printf("hello \n");
-	 // HAL_Delay(500);
 
+	  meterPerSecond = speedCalc(avgFrequency);
+
+	  kph = meterPerSecond * 3.6;
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -349,7 +350,9 @@ float getFreq(uint32_t* captureTimes){
 
 }
 
-
+float speedCalc(float frequencyShift){
+	return (frequencyShift/2) * WAVELENGTH;
+}
 
 /* USER CODE END 4 */
 
