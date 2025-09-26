@@ -41,6 +41,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 TIM_HandleTypeDef htim2;
+DMA_HandleTypeDef hdma_tim2_ch1;
 
 UART_HandleTypeDef huart2;
 
@@ -54,6 +55,7 @@ uint32_t avgFrequency;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
@@ -94,6 +96,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_USART2_UART_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
@@ -185,6 +188,8 @@ static void MX_TIM2_Init(void)
 
   /* USER CODE END TIM2_Init 0 */
 
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_SlaveConfigTypeDef sSlaveConfig = {0};
   TIM_MasterConfigTypeDef sMasterConfig = {0};
   TIM_IC_InitTypeDef sConfigIC = {0};
 
@@ -197,7 +202,24 @@ static void MX_TIM2_Init(void)
   htim2.Init.Period = 4294967295;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
   if (HAL_TIM_IC_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sSlaveConfig.SlaveMode = TIM_SLAVEMODE_RESET;
+  sSlaveConfig.InputTrigger = TIM_TS_TI1FP1;
+  sSlaveConfig.TriggerPolarity = TIM_INPUTCHANNELPOLARITY_RISING;
+  sSlaveConfig.TriggerFilter = 0;
+  if (HAL_TIM_SlaveConfigSynchro(&htim2, &sSlaveConfig) != HAL_OK)
   {
     Error_Handler();
   }
@@ -251,6 +273,22 @@ static void MX_USART2_UART_Init(void)
   /* USER CODE BEGIN USART2_Init 2 */
 
   /* USER CODE END USART2_Init 2 */
+
+}
+
+/**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA1_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA1_Stream5_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream5_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream5_IRQn);
 
 }
 
@@ -309,7 +347,7 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
 	if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1) {
 	        captureValue = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);
 
-	        frequency1 = (TIMER_FREQUENCY) / (captureValue - previousCaptureValue);
+	        frequency1 = (TIMER_FREQUENCY) / (captureValue /*- previousCaptureValue*/);
 	        frequency = frequency1 < 100000 ? frequency1 : frequency;
 	        previousCaptureValue = captureValue;
 	    }
@@ -332,7 +370,9 @@ uint32_t rollingAverage(uint32_t currentNum){
 
 	return average;
 
-	}
+}
+
+
 
 /* USER CODE END 4 */
 
