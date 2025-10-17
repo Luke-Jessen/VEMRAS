@@ -6,6 +6,8 @@
 #define SRCLK   5
 #define NSRCLR  6
 
+#define BUTTON 7
+
 
 void dispWord(uint16_t word);
 void intToArr16(uint8_t num, uint8_t *arr);
@@ -19,7 +21,8 @@ SoftwareSerial Serial1(10, 11); // RX, TX
 
 uint8_t recNum;
 
-
+uint8_t dbFlag = 0;
+uint8_t bOn = 0;
 
 
 
@@ -30,12 +33,15 @@ void setup() {
   Serial1.begin(9600);
   Serial.begin(9600);   // Initialize Serial1 for sending data
 
+  pinMode(BUTTON, INPUT);
+
   pinMode(SER, OUTPUT);
   pinMode(NOE, OUTPUT);
   pinMode(RCLK, OUTPUT);
   pinMode(SRCLK, OUTPUT);
   pinMode(NSRCLR, OUTPUT);
 
+  //ensure resets and clock at correct state
   digitalWrite(NOE, LOW);
   digitalWrite(NSRCLR, HIGH);
   digitalWrite(RCLK, LOW);
@@ -49,7 +55,7 @@ void loop() {
   while (Serial1.available() > 0) {
     char receivedChar = Serial1.read();
     if (receivedChar == '\n') {
-      Serial.println(receivedMessage);  // Print the received message in the Serial monitor
+      //Serial.println(receivedMessage);  // Print the received message in the Serial monitor
       recNum = ((receivedMessage[0]) *10) + (receivedMessage[1]);
       receivedMessage = "";  // Reset the received message
     } else {
@@ -57,28 +63,41 @@ void loop() {
     }
   }
 
+  //Serial.println(recNum);
+
   recNum = recNum < 100 ? recNum : 99;
 
+
   dispWord(numToWord(recNum));
+
   
   // for(uint8_t i = 0; i < 100; i++){
   //   dispWord(numToWord(i));
     
-  //   //dispWord(0b0000000010001000);
+     //dispWord(0b0000000010001000);
   //   delay(500);
   // }
     //clearDisp();
  
+  if(digitalRead(BUTTON)){
+    if(dbFlag && bOn==0){
+      Serial1.println(72);
+      Serial.println("sent");
+      bOn = 1;
+    }
+
+    dbFlag = 1;
+  }else{
+    dbFlag = 0;
+    bOn = 0;
+  }
 
 }
 
 void dispWord(uint16_t word){
-  
-  Serial.println("Wrote:");
-
+    //clock data into shift register
     for(uint8_t i = 0; i < 16; i++){
-      digitalWrite(SER, (word >> i & 1));
-      Serial.print(word >> i & 1);
+      digitalWrite(SER, (word >> i & 1));      
       delayMicroseconds(100);
       digitalWrite(SRCLK, HIGH);
       delayMicroseconds(100);
@@ -88,19 +107,18 @@ void dispWord(uint16_t word){
       
        
     }
+  //clock data to output
    digitalWrite(RCLK, HIGH);
    delayMicroseconds(100);
    digitalWrite(RCLK, LOW);
    delayMicroseconds(100);
     
-  Serial.println();
+  
 
 }
-
+//integer to segments 
 uint16_t numToWord(uint8_t num){
-  Serial.println("num:");
-  Serial.println(num);
-
+  
   static uint8_t lookup[] = {   0b0111111, 
                                 0b0000110,
                                 0b1011011,
@@ -126,22 +144,16 @@ uint16_t numToWord(uint8_t num){
     dig1 = lookup[9];
     dig2 = lookup[9];
     }
-  Serial.println("Digits:");
-  Serial.println(dig1, BIN);
-  Serial.println(dig2, BIN);
-
+  
   word = (uint16_t)dig1 << 8 | (uint16_t)dig2;
 
-  Serial.println("Appended Digits:");
-  Serial.println(word, BIN);
-
+  
   uint8_t arr16[16];
 
   intToArr16(word, arr16);
   word = moveBits(arr16);
 
-  Serial.println("Moved Bits:");
-  Serial.println(word, BIN);
+  
 
   return word;
 
@@ -149,26 +161,24 @@ uint16_t numToWord(uint8_t num){
 }
 
 void intToArr16(uint16_t num, uint8_t *arr){
-  Serial.println("Num to beconverted to array:");
-  Serial.println(num, BIN);
-  
+ 
+  //16 bit integer to array of 16 bits
 
   for(uint8_t i = 0; i < 16; i++){
       arr[i] = (num >> i) & 1;
            
     }
 
-  Serial.println("First int array");
     for(uint8_t i = 0; i < 16; i++){      
-      Serial.print(arr[15-i]);       
+     
     }
-  Serial.println();
-    
+
 }
 
 uint16_t moveBits(uint8_t *arr){
   uint8_t wordArr[16];
 
+  //reareange segments to the correct order for display
   wordArr[13] = arr[0];
   wordArr[12] = arr[1];
   wordArr[2] = arr[2];
@@ -199,11 +209,13 @@ uint16_t moveBits(uint8_t *arr){
 
 
 void clearDisp(){
+  //disable output and clear
   digitalWrite(NOE, HIGH);
   digitalWrite(NSRCLR, LOW);
 
   delay(1);
 
+  //enable output
   digitalWrite(NOE, LOW);
   digitalWrite(NSRCLR, HIGH);
 }
