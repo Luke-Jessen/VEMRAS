@@ -59,7 +59,9 @@ float avgFrequency;
 float meterPerSecond;
 float kph;
 
-uint8_t tx_buff[]={'1','1','\n'};
+uint8_t tx_buff[]={1,1,'\n'};
+
+uint8_t rx_buff[4];
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -115,6 +117,7 @@ int main(void)
   MX_UART5_Init();
   /* USER CODE BEGIN 2 */
   HAL_TIM_IC_Start_DMA(&htim2, TIM_CHANNEL_1, capture, NUMB_CAPTURES);
+  HAL_UART_Receive_IT(&huart5, rx_buff, 4);
 
   /* USER CODE END 2 */
 
@@ -128,11 +131,11 @@ int main(void)
 
 	  kph = meterPerSecond * 3.6;
 
-	  tx_buff[0] = (uint8_t)kph/10;
-	  tx_buff[1] = (uint8_t)kph%10;
+	  //tx_buff[0] = (uint8_t)kph/10;
+	  //tx_buff[1] = (uint8_t)kph%10;
 
 	  HAL_UART_Transmit(&huart5, tx_buff, 3, 1000);
-	  HAL_Delay(10);
+	  HAL_Delay(1000);
 
     /* USER CODE END WHILE */
 
@@ -450,6 +453,12 @@ float getFreq(uint32_t* captureTimes){
 
 float speedCalc(float frequencyShift){
 	return (frequencyShift/2) * WAVELENGTH;
+}
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+
+    HAL_UART_Receive_IT(&huart5, rx_buff, 4);
 }
 
 /* USER CODE END 4 */
