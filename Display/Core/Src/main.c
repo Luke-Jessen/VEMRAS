@@ -128,17 +128,16 @@ int main(void)
 
 
   begin(0x70 <<1);
+  begin(0x71 <<1);
 
-  writeDigitAscii(0, 'A', false);
-
-  writeDisplay(0x70<<1);
-
-  	  //writeDigitRaw(0, ALPHANUM_SEG_A | ALPHANUM_SEG_D);
-
-  	  //uint8_t testBuffer[] = {0x21};
-  	  //I2C_transmit(0x70<<1, testBuffer, 1);
+for (int i = 0; i < 8; ++i) {
+	writeDigitAscii(i, i+65, false);
 
 
+}
+writeDisplay();
+
+analogStart();
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -146,9 +145,10 @@ int main(void)
   while (1)
   {
 	  //writeDisplay(0x70<<1);
-	  HAL_GPIO_TogglePin(SW_I2C_SCL_GPIO_Port, SW_I2C_SCL_Pin);
-	  HAL_GPIO_TogglePin(SW_I2C_SCL_GPIO_Port, SW_I2C_SDA_Pin);
-	  HAL_Delay(200);
+	  changDir(1);
+	  HAL_Delay(1000);
+	  changDir(-1);
+	  HAL_Delay(1000);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

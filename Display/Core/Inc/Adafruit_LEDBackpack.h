@@ -116,14 +116,14 @@ See https://learn.adafruit.com/14-segment-alpha-numeric-led-featherwing/usage
   /*!
     @brief  Issue buffered data in RAM to display.
   */
-  void writeDisplay(uint8_t address);
+  void writeDisplay();
 
   /*!
     @brief  Clear display.
   */
   void clear(void);
 
-  extern uint16_t displaybuffer[8]; ///< Raw display data
+  extern uint16_t displaybuffer[16]; ///< Raw display data
 
 
 

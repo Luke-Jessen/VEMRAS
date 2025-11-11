@@ -55,7 +55,7 @@
 #endif
 
 
-uint16_t displaybuffer[8]; ///< Raw display data
+uint16_t displaybuffer[16]; ///< Raw display data
 
 
 static const uint16_t alphafonttable[] = {
@@ -216,7 +216,7 @@ void begin(uint8_t _addr) {
 
 }
 
-void writeDisplay(uint8_t address) {
+void writeDisplay() {
   uint8_t buffer[17];
 
   buffer[0] = 0x00; // start at address $00
@@ -226,7 +226,14 @@ void writeDisplay(uint8_t address) {
     buffer[2 + 2 * i] = displaybuffer[i] >> 8;
   }
 
-  I2C_transmit(address, buffer, 17);
+
+
+  for (uint8_t i = 8; i < 16; i++) {
+      buffer[1 + 2 * i] = displaybuffer[i] & 0xFF;
+      buffer[2 + 2 * i] = displaybuffer[i] >> 8;
+    }
+
+  I2C_transmit(0x71<<1, buffer, 17);
 }
 
 void clear(void) {
@@ -235,7 +242,7 @@ void clear(void) {
   }
 }
 
-/******************************* QUAD ALPHANUM OBJECT */
+
 
 
 
