@@ -130,6 +130,9 @@ int main(void)
   begin(0x70 <<1);
   begin(0x71 <<1);
 
+  clear();
+  writeDisplay();
+
 for (int i = 0; i < 8; ++i) {
 	writeDigitAscii(i, i+65, false);
 
@@ -145,10 +148,10 @@ analogStart();
   while (1)
   {
 	  //writeDisplay(0x70<<1);
-	  changDir(1);
-	  HAL_Delay(1000);
-	  changDir(-1);
-	  HAL_Delay(1000);
+	  //changDir(1);
+	  //HAL_Delay(1000);
+	  //changDir(-1);
+	 // HAL_Delay(1000);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */

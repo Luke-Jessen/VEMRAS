@@ -226,11 +226,11 @@ void writeDisplay() {
     buffer[2 + 2 * i] = displaybuffer[i] >> 8;
   }
 
+  I2C_transmit(0x70<<1, buffer, 17);
 
-
-  for (uint8_t i = 8; i < 16; i++) {
-      buffer[1 + 2 * i] = displaybuffer[i] & 0xFF;
-      buffer[2 + 2 * i] = displaybuffer[i] >> 8;
+  for (uint8_t i = 0; i < 8; i++) {
+      buffer[1 + 2 * i] = displaybuffer[i+4] & 0xFF;
+      buffer[2 + 2 * i] = displaybuffer[i+4] >> 8;
     }
 
   I2C_transmit(0x71<<1, buffer, 17);
