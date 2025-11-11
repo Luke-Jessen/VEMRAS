@@ -21,6 +21,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "stm32_sw_i2c.h"
+#include "dwt_stm32_delay.h"
+#include "Adafruit_LEDBackpack.h"
 
 /* USER CODE END Includes */
 
@@ -28,7 +31,8 @@
 /* USER CODE BEGIN PTD */
 typedef struct{
     uint8_t unit;
-    uint8_8 mode;
+    uint8_t mode;
+    uint8_t dir;
     float curDisp;
     float toDisp;
     float dispDiff;
@@ -46,16 +50,21 @@ typedef struct{
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-I2C_HandleTypeDef hi2c1;
-
 TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim2;
+TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim8;
 
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-
+display mainDisp = {0,
+					0,
+					1,
+					0,
+					0,
+					0
+					};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -65,7 +74,7 @@ static void MX_USART2_UART_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_TIM8_Init(void);
 static void MX_TIM2_Init(void);
-static void MX_I2C1_Init(void);
+static void MX_TIM3_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -108,30 +117,38 @@ int main(void)
   MX_TIM1_Init();
   MX_TIM8_Init();
   MX_TIM2_Init();
-  MX_I2C1_Init();
+  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
-  TIM1->CCR1 = 2;
-  TIM1->CCR2 = 4;
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
 
+  I2C_init();
+  DWT_Delay_Init();
+  HAL_Delay(1);
 
-  TIM8->CCR1 = 2;
-  TIM8->CCR2 = 4;
   TIM8->CNT = 2;
-  HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_1);
-  HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_2);
 
 
+  begin(0x70 <<1);
 
-  HAL_TIM_Base_Start(&htim2);
+  writeDigitAscii(0, 'A', false);
+
+  writeDisplay(0x70<<1);
+
+  	  //writeDigitRaw(0, ALPHANUM_SEG_A | ALPHANUM_SEG_D);
+
+  	  //uint8_t testBuffer[] = {0x21};
+  	  //I2C_transmit(0x70<<1, testBuffer, 1);
+
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
+	  //writeDisplay(0x70<<1);
+	  HAL_GPIO_TogglePin(SW_I2C_SCL_GPIO_Port, SW_I2C_SCL_Pin);
+	  HAL_GPIO_TogglePin(SW_I2C_SCL_GPIO_Port, SW_I2C_SDA_Pin);
+	  HAL_Delay(200);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -184,40 +201,6 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-}
-
-/**
-  * @brief I2C1 Initialization Function
-  * @param None
-  * @retval None
-  */
-static void MX_I2C1_Init(void)
-{
-
-  /* USER CODE BEGIN I2C1_Init 0 */
-
-  /* USER CODE END I2C1_Init 0 */
-
-  /* USER CODE BEGIN I2C1_Init 1 */
-
-  /* USER CODE END I2C1_Init 1 */
-  hi2c1.Instance = I2C1;
-  hi2c1.Init.ClockSpeed = 100000;
-  hi2c1.Init.DutyCycle = I2C_DUTYCYCLE_2;
-  hi2c1.Init.OwnAddress1 = 0;
-  hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
-  hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
-  hi2c1.Init.OwnAddress2 = 0;
-  hi2c1.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
-  hi2c1.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
-  if (HAL_I2C_Init(&hi2c1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN I2C1_Init 2 */
-
-  /* USER CODE END I2C1_Init 2 */
-
 }
 
 /**
@@ -347,6 +330,51 @@ static void MX_TIM2_Init(void)
 }
 
 /**
+  * @brief TIM3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM3_Init(void)
+{
+
+  /* USER CODE BEGIN TIM3_Init 0 */
+
+  /* USER CODE END TIM3_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM3_Init 1 */
+
+  /* USER CODE END TIM3_Init 1 */
+  htim3.Instance = TIM3;
+  htim3.Init.Prescaler = 83;
+  htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim3.Init.Period = 65535;
+  htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim3, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM3_Init 2 */
+
+  /* USER CODE END TIM3_Init 2 */
+
+}
+
+/**
   * @brief TIM8 Initialization Function
   * @param None
   * @retval None
@@ -367,7 +395,7 @@ static void MX_TIM8_Init(void)
 
   /* USER CODE END TIM8_Init 1 */
   htim8.Instance = TIM8;
-  htim8.Init.Prescaler = 8399;
+  htim8.Init.Prescaler = 699;
   htim8.Init.CounterMode = TIM_COUNTERMODE_CENTERALIGNED1;
   htim8.Init.Period = 6;
   htim8.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
@@ -477,10 +505,20 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
 
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, SW_I2C_SDA_Pin|SW_I2C_SCL_Pin, GPIO_PIN_RESET);
+
   /*Configure GPIO pins : B1_Pin B2_Pin B3_Pin */
   GPIO_InitStruct.Pin = B1_Pin|B2_Pin|B3_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : SW_I2C_SDA_Pin SW_I2C_SCL_Pin */
+  GPIO_InitStruct.Pin = SW_I2C_SDA_Pin|SW_I2C_SCL_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
@@ -489,10 +527,24 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-void changDir(uint8_t direction){
+void changDir(uint8_t dir){
 
 	TIM1->CNT = dir == 1 ? 0 : 2;
 	TIM8->CNT = dir == 1 ? 2 : 0;
+}
+
+void analogStart(){
+	 TIM1->CCR1 = 2;
+	  TIM1->CCR2 = 4;
+	  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+	  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
+
+
+	  TIM8->CCR1 = 2;
+	  TIM8->CCR2 = 4;
+
+	  HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_1);
+	  HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_2);
 }
 
 void changeFreq(uint8_t freq){

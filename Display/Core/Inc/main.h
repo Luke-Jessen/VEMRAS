@@ -33,6 +33,7 @@ extern "C" {
 /* USER CODE BEGIN Includes */
 void changDir(uint8_t direction);
 void changeFreq(uint8_t freq);
+void analogStart();
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -74,6 +75,10 @@ void Error_Handler(void);
 #define TMS_GPIO_Port GPIOA
 #define TCK_Pin GPIO_PIN_14
 #define TCK_GPIO_Port GPIOA
+#define SW_I2C_SDA_Pin GPIO_PIN_8
+#define SW_I2C_SDA_GPIO_Port GPIOB
+#define SW_I2C_SCL_Pin GPIO_PIN_9
+#define SW_I2C_SCL_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 
