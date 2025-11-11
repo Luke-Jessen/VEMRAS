@@ -32,7 +32,7 @@ extern "C" {
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 void changDir(uint8_t direction);
-void changeFreq(uint8_t freq);
+void changeFreq(uint16_t freq);
 void analogStart();
 /* USER CODE END Includes */
 

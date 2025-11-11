@@ -138,6 +138,9 @@ for (int i = 0; i < 8; ++i) {
 
 
 }
+
+changeFreq(100);
+
 writeDisplay();
 
 analogStart();
@@ -148,10 +151,10 @@ analogStart();
   while (1)
   {
 	  //writeDisplay(0x70<<1);
-	  //changDir(1);
-	  //HAL_Delay(1000);
-	  //changDir(-1);
-	 // HAL_Delay(1000);
+	  changDir(1);
+	  HAL_Delay(1000);
+	  changDir(-1);
+	 HAL_Delay(1000);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -424,7 +427,7 @@ static void MX_TIM8_Init(void)
   {
     Error_Handler();
   }
-  sConfigOC.OCMode = TIM_OCMODE_PWM1;
+  sConfigOC.OCMode = TIM_OCMODE_PWM2;
   sConfigOC.Pulse = 0;
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
   sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
@@ -435,7 +438,7 @@ static void MX_TIM8_Init(void)
   {
     Error_Handler();
   }
-  sConfigOC.OCMode = TIM_OCMODE_PWM2;
+  sConfigOC.OCMode = TIM_OCMODE_PWM1;
   if (HAL_TIM_PWM_ConfigChannel(&htim8, &sConfigOC, TIM_CHANNEL_2) != HAL_OK)
   {
     Error_Handler();
@@ -537,10 +540,10 @@ void changDir(uint8_t dir){
 }
 
 void analogStart(){
-	 TIM1->CCR1 = 2;
-	  TIM1->CCR2 = 4;
-	  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-	  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
+	 TIM1->CCR3 = 2;
+	  TIM1->CCR4 = 4;
+	  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
+	  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4);
 
 
 	  TIM8->CCR1 = 2;
@@ -548,9 +551,10 @@ void analogStart(){
 
 	  HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_1);
 	  HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_2);
+	  HAL_TIM_Base_Start(&htim2);
 }
 
-void changeFreq(uint8_t freq){
+void changeFreq(uint16_t freq){
 	TIM2->ARR = 5000/freq;
 }
 /* USER CODE END 4 */
