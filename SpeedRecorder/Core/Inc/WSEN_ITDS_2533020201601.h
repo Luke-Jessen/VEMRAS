@@ -30,10 +30,10 @@
 
 #ifndef _WSEN_ITDS_2533020201601_H
 #define _WSEN_ITDS_2533020201601_H
-
+#define WE_USE_FLOAT
 /*         Includes         */
 
-#include "../WeSensorsSDK.h"
+#include "WeSensorsSDK.h"
 
 /*         ITDS 2533020201601 DEVICE_ID         */
 

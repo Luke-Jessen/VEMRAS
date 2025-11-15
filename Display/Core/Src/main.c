@@ -65,6 +65,8 @@ display mainDisp = {0,
 					0,
 					0
 					};
+
+uint32_t stepperFreq = 100;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -135,11 +137,13 @@ int main(void)
 
 for (int i = 0; i < 8; ++i) {
 	writeDigitAscii(i, i+65, false);
-
+	//writeDigitRaw(i, 0xFFFF);
 
 }
 
-changeFreq(100);
+
+
+changeFreq(stepperFreq);
 
 writeDisplay();
 
@@ -151,10 +155,7 @@ analogStart();
   while (1)
   {
 	  //writeDisplay(0x70<<1);
-	  changDir(1);
-	  HAL_Delay(1000);
-	  changDir(-1);
-	 HAL_Delay(1000);
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -235,7 +236,7 @@ static void MX_TIM1_Init(void)
   htim1.Init.Period = 6;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim1.Init.RepetitionCounter = 0;
-  htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim1) != HAL_OK)
   {
     Error_Handler();
@@ -514,9 +515,9 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, SW_I2C_SDA_Pin|SW_I2C_SCL_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : B1_Pin B2_Pin B3_Pin */
-  GPIO_InitStruct.Pin = B1_Pin|B2_Pin|B3_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  /*Configure GPIO pins : PB0 PB1 PB2 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
@@ -527,6 +528,16 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI0_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI1_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI1_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI2_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI2_IRQn);
+
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
   /* USER CODE END MX_GPIO_Init_2 */
@@ -534,9 +545,28 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 void changDir(uint8_t dir){
+	TIM2->CR1 &= 0xFFFE;
+	//TIM8->CR1 &= 0xFFFE;
 
-	TIM1->CNT = dir == 1 ? 0 : 2;
-	TIM8->CNT = dir == 1 ? 2 : 0;
+	if(dir == 1){
+		TIM1->CNT = 0;
+		TIM8->CNT = 2;
+
+
+
+	}else{
+		TIM1->CNT = 2;
+		TIM8->CNT = 0;
+
+
+
+	}
+
+
+
+
+	TIM2->CR1 |= 0x0001;
+	//TIM8->CR1 |= 0x0001;
 }
 
 void analogStart(){
@@ -555,8 +585,53 @@ void analogStart(){
 }
 
 void changeFreq(uint16_t freq){
-	TIM2->ARR = 5000/freq;
+	TIM2->PSC = 5000/freq;
 }
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
+
+
+	switch (GPIO_Pin){
+	case GPIO_PIN_0:
+		stepperFreq = stepperFreq <= 10 ? 10 : stepperFreq - 10;
+		break;
+
+	case GPIO_PIN_1:
+
+		writeString(0, "TEST", 4);
+		writeDisplay();
+		mainDisp.dir = mainDisp.dir == 1 ? -1 : 1;
+		changDir(mainDisp.dir);
+		return;
+		break;
+
+	case GPIO_PIN_2:
+		stepperFreq += 10;
+		break;
+
+	default:
+		writeString(0, "fail", 4);
+		writeDisplay();
+		return;
+		break;
+
+	}
+
+	uint8_t spot = 0;
+
+	for(uint32_t i = 100000000; i>=10; i = i/10){
+		writeDigitNum(spot, (stepperFreq % i) / (i/10), false);
+
+		spot++;
+	}
+	writeDisplay();
+
+	changeFreq(stepperFreq);
+
+}
+
+
+
 /* USER CODE END 4 */
 
 /**

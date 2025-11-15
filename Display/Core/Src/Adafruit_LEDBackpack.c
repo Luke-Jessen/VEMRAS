@@ -261,8 +261,50 @@ void writeDigitAscii(uint8_t n, uint8_t a, bool d) {
   Serial.print("' = 0x"); Serial.println(font, HEX);
   */
 
-  if (d)
+  if (d){
     displaybuffer[n] |= (1 << 14);
+  }
 }
+
+void writeString(uint8_t start, char *string, uint8_t length){
+	uint8_t character = 0;
+
+	for (uint8_t i = start; i < length; i++) {
+
+			writeDigitAscii(i, string[character], false);
+			character ++;
+
+	}
+}
+
+
+void writeDigitNum(uint8_t d, uint8_t num, bool dot) {
+
+  if (num >= 10) { // Hex characters
+    switch (num) {
+    case 10:
+      writeDigitAscii(d, 'A', dot);
+      break;
+    case 11:
+      writeDigitAscii(d, 'B', dot);
+      break;
+    case 12:
+      writeDigitAscii(d, 'C', dot);
+      break;
+    case 13:
+      writeDigitAscii(d, 'D', dot);
+      break;
+    case 14:
+      writeDigitAscii(d, 'E', dot);
+      break;
+    case 15:
+      writeDigitAscii(d, 'F', dot);
+      break;
+    }
+  }
+
+  else
+     writeDigitAscii(d, num + 48, dot); // use ASCII offset
+ }
 
 

@@ -171,7 +171,7 @@ See https://learn.adafruit.com/14-segment-alpha-numeric-led-featherwing/usage
   /*!
     @brief  Issue colon-on directly to display (bypass buffer).
   */
-  void writeColon(void);
+
 
 
 
@@ -192,6 +192,8 @@ See https://learn.adafruit.com/14-segment-alpha-numeric-led-featherwing/usage
     @param  dot    If true, also light corresponding dot segment.
   */
   void writeDigitAscii(uint8_t n, uint8_t ascii, bool dot);
+
+  void writeString(uint8_t start, char *string, uint8_t length);
 
 
 #endif // Adafruit_LEDBackpack_h

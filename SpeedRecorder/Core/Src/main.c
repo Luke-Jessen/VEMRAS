@@ -75,7 +75,7 @@ float avgFrequency;
 float meterPerSecond;
 uint8_t direction = 1;
 
-uint8_t tx_buff[]={'B', 'C', 1, 2, 3, 4, 5, 6, '\n'};
+char tx_buff[]={'B', 'C', 1, 2, 3, 4, 5, 6, '\n'};
 
 uint8_t rx_buff[4];
 /* USER CODE END PV */
@@ -135,7 +135,7 @@ int main(void)
   HAL_TIM_IC_Start_DMA(&htim2, TIM_CHANNEL_1, capture, NUMB_CAPTURES);
   HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_1);
   HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_2);
-  HAL_UART_Receive_IT(&huart5, rx_buff, 4);
+  HAL_UART_Receive_IT(&huart4, rx_buff, 4);
 
   /* USER CODE END 2 */
 
@@ -145,7 +145,7 @@ int main(void)
   {
 	  floatToCharArr(speedCalc(getFreq(capture)),  tx_buff);
 
-	  HAL_UART_Transmit(&huart5,  tx_buff, 4, 1000);
+	  HAL_UART_Transmit(&huart4,  tx_buff, 4, 1000);
 
 
     /* USER CODE END WHILE */
@@ -503,12 +503,12 @@ float speedCalc(float frequencyShift){
 void floatToCharArr(float num, char *buff){
 
 	num *=(float)1000;
-	uint intNum = (int)num;
+	uint16_t intNum = (int)num;
 	uint8_t dig = 0;
 
 	uint8_t spot = 7;
 
-	for(uint8_t i = 10; i<=1000000; i*=10){
+	for(uint32_t i = 10; i<=1000000; i*=10){
 		dig = (intNum % i) / (i/10);
 		buff[spot] = dig | (~dig) << 4;
 
@@ -517,7 +517,7 @@ void floatToCharArr(float num, char *buff){
 }
 
 float tempRead(){
-
+ return 0;
 }
 
 void oneWireTx(){
@@ -531,7 +531,7 @@ void oneWireRx(){
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
 
-    HAL_UART_Receive_IT(&huart5, rx_buff, 4);
+    HAL_UART_Receive_IT(&huart4, rx_buff, 4);
 }
 
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim){
