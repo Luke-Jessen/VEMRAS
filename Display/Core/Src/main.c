@@ -29,14 +29,16 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-typedef struct{
+
     uint8_t unit;
     uint8_t mode;
     uint8_t dir;
     float curDisp;
     float toDisp;
     float dispDiff;
-}display;
+
+    uint8_t msFlag = 0;
+
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -58,13 +60,7 @@ TIM_HandleTypeDef htim8;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-display mainDisp = {0,
-					0,
-					1,
-					0,
-					0,
-					0
-					};
+
 
 uint32_t stepperFreq = 100;
 /* USER CODE END PV */
@@ -147,14 +143,16 @@ changeFreq(stepperFreq);
 
 writeDisplay();
 
-analogStart();
+//analogStart();
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  //writeDisplay(0x70<<1);
+	  if(msFlag){
+		  msHandler();
+	  }
 
     /* USER CODE END WHILE */
 
@@ -355,9 +353,9 @@ static void MX_TIM3_Init(void)
 
   /* USER CODE END TIM3_Init 1 */
   htim3.Instance = TIM3;
-  htim3.Init.Prescaler = 83;
+  htim3.Init.Prescaler = 8399;
   htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim3.Init.Period = 65535;
+  htim3.Init.Period = 99;
   htim3.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim3.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
@@ -515,9 +513,9 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, SW_I2C_SDA_Pin|SW_I2C_SCL_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : PB0 PB1 PB2 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  /*Configure GPIO pins : Button1_Pin Button2_Pin Button3_Pin */
+  GPIO_InitStruct.Pin = Button1_Pin|Button2_Pin|Button3_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
@@ -527,16 +525,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-  /* EXTI interrupt init*/
-  HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI0_IRQn);
-
-  HAL_NVIC_SetPriority(EXTI1_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI1_IRQn);
-
-  HAL_NVIC_SetPriority(EXTI2_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(EXTI2_IRQn);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
@@ -571,41 +559,79 @@ void changDir(uint8_t dir){
 
 void analogStart(){
 	 TIM1->CCR3 = 2;
-	  TIM1->CCR4 = 4;
-	  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
-	  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4);
+	 TIM1->CCR4 = 4;
+	 HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
+	 HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_4);
 
 
-	  TIM8->CCR1 = 2;
-	  TIM8->CCR2 = 4;
+	TIM8->CCR1 = 2;
+	TIM8->CCR2 = 4;
 
-	  HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_1);
-	  HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_2);
-	  HAL_TIM_Base_Start(&htim2);
+	HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_1);
+	HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_2);
+	HAL_TIM_Base_Start(&htim2);
 }
 
 void changeFreq(uint16_t freq){
 	TIM2->PSC = 5000/freq;
 }
 
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){
+
+void stepNum(uint8_t direction, uint16_t numSteps){
+ changDir(direction);
+}
+
+void msHandler(){
+	msFlag = 0;
+
+	static uint8_t B0 =0;
+	static uint8_t B1 =0;
+	static uint8_t B2 =0;
+
+	B0 <<= 1;
+	B1 <<= 1;
+	B2 <<= 1;
+
+	B0 |= HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_0);// == SET ? 1 : 0;
+	B1 |= HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_1);// == SET ? 1 : 0;
+	B2 |= HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_2);// == SET ? 1 : 0;
 
 
-	switch (GPIO_Pin){
-	case GPIO_PIN_0:
+
+	if(B0 == 0x7F){
+		buttonHandler(0);
+	}
+
+	if(B1 == 0x7F){
+			buttonHandler(1);
+		}
+
+	if(B2 == 0x7F){
+			buttonHandler(2);
+		}
+
+
+}
+
+
+void buttonHandler(uint8_t button){
+
+
+	switch (button){
+	case 0:
 		stepperFreq = stepperFreq <= 10 ? 10 : stepperFreq - 10;
 		break;
 
-	case GPIO_PIN_1:
+	case 1:
 
 		writeString(0, "TEST", 4);
 		writeDisplay();
-		mainDisp.dir = mainDisp.dir == 1 ? -1 : 1;
-		changDir(mainDisp.dir);
+		dir = dir == 1 ? -1 : 1;
+		changDir(dir);
 		return;
 		break;
 
-	case GPIO_PIN_2:
+	case 2:
 		stepperFreq += 10;
 		break;
 

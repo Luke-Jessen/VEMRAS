@@ -34,6 +34,9 @@ extern "C" {
 void changDir(uint8_t direction);
 void changeFreq(uint16_t freq);
 void analogStart();
+void stepNum(uint8_t direction, uint16_t numSteps);
+void msHandler();
+void buttonHandler(uint8_t button);
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
@@ -65,6 +68,12 @@ void Error_Handler(void);
 #define USART_TX_GPIO_Port GPIOA
 #define USART_RX_Pin GPIO_PIN_3
 #define USART_RX_GPIO_Port GPIOA
+#define Button1_Pin GPIO_PIN_0
+#define Button1_GPIO_Port GPIOB
+#define Button2_Pin GPIO_PIN_1
+#define Button2_GPIO_Port GPIOB
+#define Button3_Pin GPIO_PIN_2
+#define Button3_GPIO_Port GPIOB
 #define TMS_Pin GPIO_PIN_13
 #define TMS_GPIO_Port GPIOA
 #define TCK_Pin GPIO_PIN_14
