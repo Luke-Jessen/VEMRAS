@@ -143,7 +143,9 @@ changeFreq(stepperFreq);
 
 writeDisplay();
 
-//analogStart();
+analogStart();
+
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -234,7 +236,7 @@ static void MX_TIM1_Init(void)
   htim1.Init.Period = 6;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim1.Init.RepetitionCounter = 0;
-  htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
   if (HAL_TIM_Base_Init(&htim1) != HAL_OK)
   {
     Error_Handler();
@@ -308,11 +310,11 @@ static void MX_TIM2_Init(void)
 
   /* USER CODE END TIM2_Init 1 */
   htim2.Instance = TIM2;
-  htim2.Init.Prescaler = 6;
+  htim2.Init.Prescaler = 5;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim2.Init.Period = 1;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
   {
     Error_Handler();
@@ -405,7 +407,7 @@ static void MX_TIM8_Init(void)
   htim8.Init.Period = 6;
   htim8.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim8.Init.RepetitionCounter = 0;
-  htim8.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  htim8.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
   if (HAL_TIM_Base_Init(&htim8) != HAL_OK)
   {
     Error_Handler();
@@ -540,13 +542,22 @@ void changDir(uint8_t dir){
 		TIM1->CNT = 0;
 		TIM8->CNT = 2;
 
+		TIM1->CCR3 = 4;
+		TIM1->CCR4 = 2;
+
+		TIM8->CCR1 = 2;
+		TIM8->CCR2 = 4;
 
 
 	}else{
 		TIM1->CNT = 2;
 		TIM8->CNT = 0;
 
+		TIM1->CCR3 = 2;
+		TIM1->CCR4 = 4;
 
+		TIM8->CCR1 = 4;
+		TIM8->CCR2 = 2;
 
 	}
 
@@ -569,7 +580,7 @@ void analogStart(){
 
 	HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_1);
 	HAL_TIM_PWM_Start(&htim8, TIM_CHANNEL_2);
-	HAL_TIM_Base_Start(&htim2);
+	//HAL_TIM_Base_Start(&htim2);
 }
 
 void changeFreq(uint16_t freq){

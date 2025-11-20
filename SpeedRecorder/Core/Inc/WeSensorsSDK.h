@@ -33,6 +33,7 @@
 
 #include <stdint.h>
 
+
 /**
  * @brief SDK major version number.
  */

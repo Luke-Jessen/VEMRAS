@@ -30,9 +30,8 @@
  * Example for the ITDS accelerometer showing how to execute the sensor's self test procedure.
  */
 #include "WSEN_ITDS_SELF_TEST_EXAMPLE.h"
-#include "../SensorsSDK/WSEN_ITDS_2533020201601/WSEN_ITDS_2533020201601.h"
-#include "gpio.h"
-#include "i2c.h"
+#include "WSEN_ITDS_2533020201601.h"
+#include "stm32f4xx_hal.h"
 #include <math.h>
 #include <platform.h>
 #include <stdbool.h>
@@ -46,6 +45,9 @@
 /* Self-test positive difference [mg] */
 #define ITDS_SELF_TEST_MIN_POS 70.0f
 #define ITDS_SELF_TEST_MAX_POS 1500.0f
+
+
+extern SPI_HandleTypeDef hspi2;
 
 /* Sensor interface configuration */
 static WE_sensorInterface_t itds;
@@ -81,9 +83,7 @@ void WE_itdsSelfTestExampleInit()
             ;
     }
 
-    /* LED on */
-    HAL_GPIO_WritePin(LD3_GPIO_Port, LD3_Pin, GPIO_PIN_SET);
-    HAL_Delay(5);
+
 }
 
 /**
@@ -111,11 +111,11 @@ void WE_itdsSelfTestExampleLoop()
  */
 static bool ITDS_init(void)
 {
-    /* Initialize sensor interface (i2c with ITDS address, burst mode activated) */
+    /* Initialize sensor interface (spi with ITDS address, burst mode activated) */
     ITDS_getDefaultInterface(&itds);
-    itds.interfaceType = WE_i2c;
-    itds.options.i2c.burstMode = 1;
-    itds.handle = &hi2c1;
+    itds.interfaceType = WE_spi;
+    itds.options.spi.burstMode = 1;
+    itds.handle = &hspi2;
 
     /* Wait for boot */
     HAL_Delay(50);

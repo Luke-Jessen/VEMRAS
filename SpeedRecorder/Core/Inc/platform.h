@@ -32,6 +32,7 @@
 #define PLATFORM_H_INCLUDED
 
 #include "WeSensorsSDK.h"
+
 #include <stdint.h>
 
 /* Read a register's content */

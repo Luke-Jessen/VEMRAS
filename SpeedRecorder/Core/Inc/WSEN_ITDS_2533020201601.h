@@ -35,6 +35,9 @@
 
 #include "WeSensorsSDK.h"
 
+
+
+
 /*         ITDS 2533020201601 DEVICE_ID         */
 
 #define ITDS_DEVICE_ID_VALUE 0x44 /**< This is the expected answer when requesting the ITDS_DEVICE_ID_REG */

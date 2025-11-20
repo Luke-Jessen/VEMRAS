@@ -31,15 +31,15 @@
 #include "WSEN_ITDS_2533020201601.h"
 
 #include <stdio.h>
-
+#include "stm32f4xx_hal.h"
 #include <platform.h>
 
 /**
  * @brief Default sensor interface configuration.
  */
 static WE_sensorInterface_t itdsDefaultSensorInterface = {.sensorType = WE_ITDS,
-                                                          .interfaceType = WE_i2c,
-                                                          .options = {.i2c = {.address = ITDS_ADDRESS_I2C_1, .burstMode = 0, .protocol = WE_i2cProtocol_RegisterBased, .useRegAddrMsbForMultiBytesRead = 0, .reserved = 0}, .spi = {.chipSelectPort = 0, .chipSelectPin = 0, .burstMode = 0, .duplexMode = 0, .reserved = 0, .sensorSpecificSettings = NULL}, .readTimeout = 1000, .writeTimeout = 1000},
+                                                          .interfaceType = WE_spi,
+                                                          .options = {.spi = {.chipSelectPort = GPIOB, .chipSelectPin = GPIO_PIN_12, .burstMode = 0, .duplexMode = 0, .reserved = 0, .sensorSpecificSettings = NULL}, .readTimeout = 1000, .writeTimeout = 1000},
                                                           .handle = 0};
 
 /**
