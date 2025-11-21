@@ -21,7 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include"WSEN_ITDS_SELF_TEST_EXAMPLE.h"
+
 #include <stdio.h>
 /* USER CODE END Includes */
 
@@ -48,14 +48,15 @@ typedef struct{
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define TIMER_FREQUENCY 90000000
-#define NUMB_CAPTURES 1
+
+#define NUMB_CAPTURES 10
 
 #define WAVELENGTH 0.01249135242f
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
+//#define TIMER_FREQUENCY (HAL_RCC_GetPCLK1Freq()/TIM2->)
 
 /* USER CODE END PM */
 
@@ -64,12 +65,17 @@ SPI_HandleTypeDef hspi2;
 
 TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim2;
+DMA_HandleTypeDef hdma_tim2_ch1;
 
 UART_HandleTypeDef huart4;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 uint32_t capture[NUMB_CAPTURES];
+
+uint32_t TIMER_FREQUENCY;
+
+float MULTIPLIER = -0.0516;
 
 float avgFrequency;
 
@@ -84,6 +90,7 @@ uint8_t rx_buff[4];
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_SPI2_Init(void);
@@ -106,6 +113,7 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
+	//get the frequency of the timer by dividing the peripheral clock frequency by the timer prescaler
 
   /* USER CODE END 1 */
 
@@ -127,19 +135,20 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_USART2_UART_Init();
   MX_TIM2_Init();
   MX_SPI2_Init();
   MX_UART4_Init();
   MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
+  TIMER_FREQUENCY = ((HAL_RCC_GetPCLK1Freq() * 2) / (TIM2->PSC+1));
+
   HAL_TIM_IC_Start_DMA(&htim2, TIM_CHANNEL_1, capture, NUMB_CAPTURES);
   HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_1);
   HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_2);
   HAL_UART_Receive_IT(&huart4, rx_buff, 4);
 
-
-  WE_itdsSelfTestExampleInit();
 
   /* USER CODE END 2 */
 
@@ -147,11 +156,18 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+//HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+//HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+//HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
+
+
+
 	 // floatToCharArr(speedCalc(getFreq(capture)),  tx_buff);
 
 	  //HAL_UART_Transmit(&huart4,  tx_buff, 4, 1000);
 
-	  WE_itdsSelfTestExampleLoop();
+	 avgFrequency = getFreq(capture);
+
 
     /* USER CODE END WHILE */
 
@@ -318,7 +334,7 @@ static void MX_TIM2_Init(void)
 
   /* USER CODE END TIM2_Init 1 */
   htim2.Instance = TIM2;
-  htim2.Init.Prescaler = 179;
+  htim2.Init.Prescaler = 0;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim2.Init.Period = 4294967295;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
@@ -431,6 +447,17 @@ static void MX_USART2_UART_Init(void)
 }
 
 /**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMA1_CLK_ENABLE();
+
+}
+
+/**
   * @brief GPIO Initialization Function
   * @param None
   * @retval None
@@ -448,17 +475,17 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(DTM_GPIO_Port, DTM_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(SPI2_CS_GPIO_Port, SPI2_CS_Pin, GPIO_PIN_SET);
 
-  /*Configure GPIO pin : PA6 */
-  GPIO_InitStruct.Pin = GPIO_PIN_6;
+  /*Configure GPIO pin : DTM_Pin */
+  GPIO_InitStruct.Pin = DTM_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+  HAL_GPIO_Init(DTM_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : SPI2_CS_Pin */
   GPIO_InitStruct.Pin = SPI2_CS_Pin;
@@ -489,7 +516,7 @@ float getFreq(uint32_t* captureTimes){
 		average+=captureTimes[i];
 	}
 
-	return (float)TIMER_FREQUENCY/((average - (average*0.02)) / (float)NUMB_CAPTURES);
+	return (float)TIMER_FREQUENCY / ((average /* - (average*MULTIPLIER)*/) / (float)NUMB_CAPTURES);
 
 }
 
