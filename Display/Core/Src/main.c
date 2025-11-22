@@ -30,20 +30,15 @@
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
 
-    uint8_t unit;
-    uint8_t mode;
-    uint8_t dir;
-    float curDisp;
-    float toDisp;
-    float dispDiff;
 
-    uint8_t msFlag = 0;
+
+
 
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define RECIEVE_LENGTH 9
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -57,22 +52,28 @@ TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim8;
 
-UART_HandleTypeDef huart2;
+UART_HandleTypeDef huart4;
 
 /* USER CODE BEGIN PV */
+uint8_t msFlag = 0;
+uint8_t rxFlag = 0;
 
+
+uint8_t rx_buff[RECIEVE_LENGTH];
 
 uint32_t stepperFreq = 100;
+
+DisplayData test;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_USART2_UART_Init(void);
 static void MX_TIM1_Init(void);
 static void MX_TIM8_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_TIM3_Init(void);
+static void MX_UART4_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -111,11 +112,11 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_USART2_UART_Init();
   MX_TIM1_Init();
   MX_TIM8_Init();
   MX_TIM2_Init();
   MX_TIM3_Init();
+  MX_UART4_Init();
   /* USER CODE BEGIN 2 */
 
   I2C_init();
@@ -131,12 +132,14 @@ int main(void)
   clear();
   writeDisplay();
 
-for (int i = 0; i < 8; ++i) {
+for (uint8_t i = 0; i < 8; ++i) {
 	writeDigitAscii(i, i+65, false);
 	//writeDigitRaw(i, 0xFFFF);
 
+
 }
 
+HAL_UART_Receive_IT(&huart4, rx_buff, RECIEVE_LENGTH);
 
 
 changeFreq(stepperFreq);
@@ -155,6 +158,10 @@ analogStart();
 	  if(msFlag){
 		  msHandler();
 	  }
+
+	  if(rxFlag){
+	  		  rxHandler(&test);
+	  	  }
 
     /* USER CODE END WHILE */
 
@@ -185,9 +192,9 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLM = 16;
-  RCC_OscInitStruct.PLL.PLLN = 336;
-  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV4;
+  RCC_OscInitStruct.PLL.PLLM = 8;
+  RCC_OscInitStruct.PLL.PLLN = 90;
+  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 2;
   RCC_OscInitStruct.PLL.PLLR = 2;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
@@ -463,35 +470,35 @@ static void MX_TIM8_Init(void)
 }
 
 /**
-  * @brief USART2 Initialization Function
+  * @brief UART4 Initialization Function
   * @param None
   * @retval None
   */
-static void MX_USART2_UART_Init(void)
+static void MX_UART4_Init(void)
 {
 
-  /* USER CODE BEGIN USART2_Init 0 */
+  /* USER CODE BEGIN UART4_Init 0 */
 
-  /* USER CODE END USART2_Init 0 */
+  /* USER CODE END UART4_Init 0 */
 
-  /* USER CODE BEGIN USART2_Init 1 */
+  /* USER CODE BEGIN UART4_Init 1 */
 
-  /* USER CODE END USART2_Init 1 */
-  huart2.Instance = USART2;
-  huart2.Init.BaudRate = 115200;
-  huart2.Init.WordLength = UART_WORDLENGTH_8B;
-  huart2.Init.StopBits = UART_STOPBITS_1;
-  huart2.Init.Parity = UART_PARITY_NONE;
-  huart2.Init.Mode = UART_MODE_TX_RX;
-  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
-  if (HAL_UART_Init(&huart2) != HAL_OK)
+  /* USER CODE END UART4_Init 1 */
+  huart4.Instance = UART4;
+  huart4.Init.BaudRate = 115200;
+  huart4.Init.WordLength = UART_WORDLENGTH_9B;
+  huart4.Init.StopBits = UART_STOPBITS_1;
+  huart4.Init.Parity = UART_PARITY_EVEN;
+  huart4.Init.Mode = UART_MODE_TX_RX;
+  huart4.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart4.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart4) != HAL_OK)
   {
     Error_Handler();
   }
-  /* USER CODE BEGIN USART2_Init 2 */
+  /* USER CODE BEGIN UART4_Init 2 */
 
-  /* USER CODE END USART2_Init 2 */
+  /* USER CODE END UART4_Init 2 */
 
 }
 
@@ -568,7 +575,7 @@ void changDir(uint8_t dir){
 	//TIM8->CR1 |= 0x0001;
 }
 
-void analogStart(){
+void analogStart(void){
 	 TIM1->CCR3 = 2;
 	 TIM1->CCR4 = 4;
 	 HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
@@ -592,7 +599,7 @@ void stepNum(uint8_t direction, uint16_t numSteps){
  changDir(direction);
 }
 
-void msHandler(){
+void msHandler(void){
 	msFlag = 0;
 
 	static uint8_t B0 =0;
@@ -622,52 +629,94 @@ void msHandler(){
 		}
 
 
+	//for (int i = 0; i < 4; ++i) {
+//			writeDigitAscii(i, rx_buff[i], false);
+		//}
+
+	//	writeDisplay();
+
+
 }
 
+void rxHandler(DisplayData *dispBuff){
+	rxFlag = 0;
+
+	parseMessage(dispBuff);
+
+	while(HAL_UART_Receive_IT(&huart4, rx_buff, RECIEVE_LENGTH) == HAL_BUSY);
+}
 
 void buttonHandler(uint8_t button){
 
 
 	switch (button){
-	case 0:
-		stepperFreq = stepperFreq <= 10 ? 10 : stepperFreq - 10;
-		break;
+		case 0:
+			stepperFreq = stepperFreq <= 10 ? 10 : stepperFreq - 10;
+			break;
 
-	case 1:
+		case 1:
 
-		writeString(0, "TEST", 4);
-		writeDisplay();
-		dir = dir == 1 ? -1 : 1;
-		changDir(dir);
-		return;
-		break;
+			writeString(0, "TEST", 4);
+			writeDisplay();
+			test.dir = test.dir == 1 ? -1 : 1;
+			changDir(test.dir);
+			return;
+			break;
 
-	case 2:
-		stepperFreq += 10;
-		break;
+		case 2:
+			stepperFreq += 10;
+			break;
 
-	default:
-		writeString(0, "fail", 4);
-		writeDisplay();
-		return;
-		break;
+		default:
+			writeString(0, "fail", 4);
+			writeDisplay();
+			return;
+
 
 	}
 
-	uint8_t spot = 0;
+	//uint8_t spot = 0;
 
-	for(uint32_t i = 100000000; i>=10; i = i/10){
+	/*for(uint32_t i = 100000000; i>=10; i = i/10){
 		writeDigitNum(spot, (stepperFreq % i) / (i/10), false);
 
 		spot++;
-	}
+	}*/
 	writeDisplay();
 
 	changeFreq(stepperFreq);
 
 }
 
+void parseMessage(DisplayData * disp){
 
+
+	uint8_t digitVal = 0;
+	uint8_t *buff = rx_buff + 2;
+
+	for(uint8_t i = 0; i< 6; ++i){
+
+
+		digitVal = ((buff[i] & 0x0F) | (buff[i] >> 4)) == 0xF ? buff[i] & 0x0F : 10;
+
+
+
+		writeDigitNum(i, digitVal, i == 2 ? true : false);
+
+
+	}
+
+	writeDisplay();
+
+
+}
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+	rxFlag = 1;
+    HAL_UART_Receive_IT(&huart4, rx_buff, RECIEVE_LENGTH);
+
+}
 
 /* USER CODE END 4 */
 

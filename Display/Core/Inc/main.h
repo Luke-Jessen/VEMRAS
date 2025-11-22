@@ -31,17 +31,20 @@ extern "C" {
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-void changDir(uint8_t direction);
-void changeFreq(uint16_t freq);
-void analogStart();
-void stepNum(uint8_t direction, uint16_t numSteps);
-void msHandler();
-void buttonHandler(uint8_t button);
+
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/
 /* USER CODE BEGIN ET */
+typedef struct{
+	uint8_t unit;
+	uint8_t mode;
+	uint8_t dir;
+	float curDisp;
+	float toDisp;
+	float dispDiff;
 
+}DisplayData;
 /* USER CODE END ET */
 
 /* Exported constants --------------------------------------------------------*/
@@ -60,14 +63,17 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef *htim);
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
-
+void changDir(uint8_t direction);
+void changeFreq(uint16_t freq);
+void analogStart(void);
+void stepNum(uint8_t direction, uint16_t numSteps);
+void msHandler(void);
+void rxHandler(DisplayData *dispBuff);
+void parseMessage(DisplayData * disp);
+void buttonHandler(uint8_t button);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define USART_TX_Pin GPIO_PIN_2
-#define USART_TX_GPIO_Port GPIOA
-#define USART_RX_Pin GPIO_PIN_3
-#define USART_RX_GPIO_Port GPIOA
 #define Button1_Pin GPIO_PIN_0
 #define Button1_GPIO_Port GPIOB
 #define Button2_Pin GPIO_PIN_1

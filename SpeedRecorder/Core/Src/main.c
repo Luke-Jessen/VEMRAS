@@ -27,29 +27,40 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-typedef struct{
-    float curSpeed;
-    //every successive array element is 100ms after the last
-    uint8_t pastSpeed[36000];
-    uint32_t startTime;
 
-}speed;
+
+//every successive array element is 100ms after the last
+uint8_t pastSpeed[36000];
+
+
+
 
 typedef struct{
     char command;
+
+    float curSpeed;
     uint8_t temperature;
     float xyz[3];
-    speed speedMain;
+    float frequencyMeasured;
+
     //increment every 100ms
      uint32_t time;
+     uint32_t startTime;
 
-}mode;
+}data;
+
+typedef struct{
+	//command, datatype, data, checksusm
+	uint8_t tx_buff[9];// = {'C', 'D', '1', '2', '3', '4', '5', '6', 'S'};
+
+
+}message;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
-#define NUMB_CAPTURES 10
+#define NUMB_CAPTURES 1
 
 #define WAVELENGTH 0.01249135242f
 /* USER CODE END PD */
@@ -82,7 +93,6 @@ float avgFrequency;
 float meterPerSecond;
 uint8_t direction = 1;
 
-char tx_buff[]={'B', 'C', 1, 2, 3, 4, 5, 6, '\n'};
 
 uint8_t rx_buff[4];
 /* USER CODE END PV */
@@ -145,8 +155,8 @@ int main(void)
   TIMER_FREQUENCY = ((HAL_RCC_GetPCLK1Freq() * 2) / (TIM2->PSC+1));
 
   HAL_TIM_IC_Start_DMA(&htim2, TIM_CHANNEL_1, capture, NUMB_CAPTURES);
-  HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_1);
-  HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_2);
+//  HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_1);
+//  HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_2);
   HAL_UART_Receive_IT(&huart4, rx_buff, 4);
 
 
@@ -160,13 +170,16 @@ int main(void)
 //HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
 //HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH
 
+	  	message currentMessage = {
+	  		.tx_buff = {'C', 'D', '1', '2', '3', '4', '5', '6', 'S'}
+	  	};
 
+		//floatToCharArr(speedCalc(getFreq(capture)),  currentMessage.tx_buff);
+		floatToCharArr(getFreq(capture),  currentMessage.tx_buff);
 
-	 // floatToCharArr(speedCalc(getFreq(capture)),  tx_buff);
-
-	  //HAL_UART_Transmit(&huart4,  tx_buff, 4, 1000);
-
-	 avgFrequency = getFreq(capture);
+		HAL_UART_Transmit(&huart4,  currentMessage.tx_buff, 9, 1000);
+		HAL_Delay(1000);
+		//avgFrequency = getFreq(capture);
 
 
     /* USER CODE END WHILE */
@@ -525,7 +538,7 @@ float speedCalc(float frequencyShift){
 }
 
 
-void floatToCharArr(float num, char *buff){
+void floatToCharArr(float num, uint8_t *buff){
 
 	num *=(float)1000;
 	uint16_t intNum = (int)num;

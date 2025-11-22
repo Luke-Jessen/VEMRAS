@@ -53,7 +53,9 @@ extern "C" {
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
-
+float getFreq(uint32_t* captureTimes);
+float speedCalc(float frequencyShift);
+void floatToCharArr(float num, uint8_t *buff);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
@@ -73,9 +75,7 @@ void Error_Handler(void);
 #define SWO_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
-float getFreq(uint32_t* captureTimes);
-float speedCalc(float frequencyShift);
-void floatToCharArr(float num, char *buff);
+
 /* USER CODE END Private defines */
 
 #ifdef __cplusplus
